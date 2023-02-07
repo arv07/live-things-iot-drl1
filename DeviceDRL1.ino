@@ -146,6 +146,7 @@ WiFiManagerParameter portP("port", "port", String(getPortSaved()).c_str(), 5); *
 
 void setup()
 {
+  
     // USE_SERIAL.begin(921600);
     USE_SERIAL.begin(9600);
     Serial.begin(9600);
@@ -195,11 +196,10 @@ void setup()
 
     /*SET HEADERS FOR SOCKETIO*/
     //String firedToken = "90e365d710e274a96030";
+    //str += firedToken + "\r\n";
     String str;
     str = "token:";
-    //str += firedToken + "\r\n";
     str += TOKEN + "\r\n";
-    str +=  + "\r\n";
     str += "type:2";
 
     const char *header = str.c_str();
@@ -220,6 +220,7 @@ void setup()
     // event handler
     socketIO.onEvent(socketIOEvent);
     // socketIO.onEvent(socketIOEvent);
+    Serial.println("Este este el nuevo scketch en el firmware");
 }
 
 void loop()
