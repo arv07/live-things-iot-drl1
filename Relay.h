@@ -2,17 +2,22 @@
 #include "Clock.h"
 void changeStateRelay(String state)
 {
+    String key[] = {"token", "message"};
+    String value[] = {TOKEN, "changed"};
+    int sizeKey = sizeof(key) / sizeof(key[0]);
+    int sizeValue = sizeof(value) / sizeof(value[0]);
+    
+    // String state = "1";
     Serial.println(state);
-    if(state == "1")
+    if (state == "1")
     {
         digitalWrite(RELAY, LOW);
-        confirmChangeState(TOKEN, "changed");
+        emitEvent(key, value, sizeKey, sizeValue, "DEVICE:confirmChangeStateDRL1");
     }
-    else if(state == "0")
+    else if (state == "0")
     {
         digitalWrite(RELAY, HIGH);
-        confirmChangeState(TOKEN, "changed");
-        
+        emitEvent(key, value, sizeKey, sizeValue, "DEVICE:confirmChangeStateDRL1");
     }
-    
+
 }

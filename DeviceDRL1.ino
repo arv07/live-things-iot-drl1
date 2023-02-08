@@ -24,18 +24,14 @@ RtcDS1302<ThreeWire> Rtc(myWire);
 #include <Hash.h>
 #include <EEPROM.h>
 #include <WiFiManager.h>
-WiFiManager wifiManager;
-// flag for saving data, for Wifi Manager
-boolean shouldSaveConfig = false;
-String saveParams = "1";
-char parameterToken[20] = "";
-char parameterServer[20] = "";
-char parameterPort[5] = "";
+
+#include "DeviceSettings.h"
+
 ESP8266WiFiMulti WiFiMulti;
 SocketIOclient socketIO;
 
 DynamicJsonDocument doc(256);
-DynamicJsonDocument dataSocket(1024);
+
 String dataResponse = "";
 #define USE_SERIAL Serial1
 
@@ -75,9 +71,8 @@ int friday = 0;
 int saturday = 0;
 int sunday = 0;
 
-
-//#include "SendDataSocket.h"
-//#include "Clock.h"
+// #include "SendDataSocket.h"
+// #include "Clock.h"
 #include "Relay.h"
 
 #include "ReceiveDataSocket.h"
@@ -98,15 +93,16 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t *payload, size_t length)
         break;
     case sIOtype_EVENT:
     {
-        //USE_SERIAL.printf("[IOc] get event aaa: %s\n", payload);
-        // deserializeJson(doc, payload);
+        // USE_SERIAL.printf("[IOc] get event aaa: %s\n", payload);
+        //  deserializeJson(doc, payload);
         USE_SERIAL.printf("[IOc] get event: %s\n", payload);
         USE_SERIAL.printf("[IOc] get event: %s\n", payload);
 
         USE_SERIAL.printf("-", payload);
-        
+        Serial.printf("[IOc] get event: %s\n", payload);
 
-        responseServerSocket(payload, length);
+        // responseServerSocket(payload, length);
+        eventHadlerSocketIO(payload, length);
 
         break;
     }
@@ -129,15 +125,6 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t *payload, size_t length)
     }
 }
 
-// callback notifying us of the need to save config, apply for configure Wifi
-void saveConfigCallback()
-{
-    Serial.println("Should save config...");
-    shouldSaveConfig = true;
-    saveParams = "2";
-    Serial.println(saveParams);
-}
-
 /* WiFiManagerParameter tokenP("token", "token", getTokenSaved().c_str(), 20);
 WiFiManagerParameter serverP("server", "server", getServerSaved().c_str(), 20);
 WiFiManagerParameter portP("port", "port", String(getPortSaved()).c_str(), 5); */
@@ -146,7 +133,7 @@ WiFiManagerParameter portP("port", "port", String(getPortSaved()).c_str(), 5); *
 
 void setup()
 {
-  
+
     // USE_SERIAL.begin(921600);
     USE_SERIAL.begin(9600);
     Serial.begin(9600);
@@ -163,40 +150,40 @@ void setup()
     USE_SERIAL.println();
     USE_SERIAL.println();
 
-
     startWifi();
 
-    //initilizeClock();
+    // initilizeClock();
 
     pinMode(sensorMovement, INPUT);
 
-    //Load alarm variables
-   /*  schHour1 = getVariableFromMemory(81, 1).toInt();
-    schMinute1 = getVariableFromMemory(83, 1).toInt();
-    schAction1 = getVariableFromMemory(85, 1).toInt();
-    schRepeat1 = getVariableFromMemory(88, 1).toInt();
-    monday = getVariableFromMemory(90, 1).toInt();
-    tuesday = getVariableFromMemory(92, 1).toInt();
-    wednesday = getVariableFromMemory(94, 1).toInt();
-    thursday = getVariableFromMemory(96, 1).toInt();
-    friday = getVariableFromMemory(98, 1).toInt();
-    saturday = getVariableFromMemory(100, 1).toInt();
-    sunday = getVariableFromMemory(102, 1).toInt(); */
+    // Load alarm variables
+    /*  schHour1 = getVariableFromMemory(81, 1).toInt();
+     schMinute1 = getVariableFromMemory(83, 1).toInt();
+     schAction1 = getVariableFromMemory(85, 1).toInt();
+     schRepeat1 = getVariableFromMemory(88, 1).toInt();
+     monday = getVariableFromMemory(90, 1).toInt();
+     tuesday = getVariableFromMemory(92, 1).toInt();
+     wednesday = getVariableFromMemory(94, 1).toInt();
+     thursday = getVariableFromMemory(96, 1).toInt();
+     friday = getVariableFromMemory(98, 1).toInt();
+     saturday = getVariableFromMemory(100, 1).toInt();
+     sunday = getVariableFromMemory(102, 1).toInt(); */
 
     // Get token from EEPROM
-    TOKEN = getTokenSaved();
+    Serial.println("Vairables configuracion -------");
+    TOKEN = getItemEEPROM(TOKEN_POSITION);
     Serial.println(TOKEN);
     delay(500);
-    SERVER = getServerSaved();
+    SERVER = getItemEEPROM(SERVER_POSITION);
     Serial.println(SERVER);
     delay(500);
-    PORT = getPortSaved();
+    PORT = getItemEEPROM(PORT_POSITION).toInt();
     Serial.println(PORT);
     delay(500);
 
     /*SET HEADERS FOR SOCKETIO*/
-    //String firedToken = "90e365d710e274a96030";
-    //str += firedToken + "\r\n";
+    // String firedToken = "90e365d710e274a96030";
+    // str += firedToken + "\r\n";
     String str;
     str = "token:";
     str += TOKEN + "\r\n";
@@ -212,13 +199,14 @@ void setup()
     // int PORT = 3010;
     //  server address, port and URL
     // socketIO.begin("192.168.1.102", 3010, "/socket.io/?EIO=4");
-    
+
     socketIO.begin(SERVER, PORT, "/socket.io/?EIO=4");
-    //socketIO.begin("192.168.1.102", 3010, "/socket.io/?EIO=4");
-    // socketIO.begin("129.159.123.207", 8082, "/socket.io/?EIO=4");
+    // socketIO.begin("192.168.1.102", 3010, "/socket.io/?EIO=4");
+    //  socketIO.begin("129.159.123.207", 8082, "/socket.io/?EIO=4");
 
     // event handler
     socketIO.onEvent(socketIOEvent);
+
     // socketIO.onEvent(socketIOEvent);
     Serial.println("Este este el nuevo scketch en el firmware");
 }
@@ -252,15 +240,15 @@ void loop()
         }
         else if (dataFingerPrint == "GET_SERVER")
         {
-            Serial.println(getServerSaved());
+            Serial.println(getItemEEPROM(SERVER_POSITION));
         }
         else if (dataFingerPrint == "GET_TOKEN")
         {
-            Serial.println(getTokenSaved());
+            Serial.println(getItemEEPROM(TOKEN_POSITION));
         }
         else if (dataFingerPrint == "GET_PORT")
         {
-            Serial.println(getPortSaved());
+            Serial.println(getItemEEPROM(PORT_POSITION));
         }
         else if (dataFingerPrint == "GET_SOCKET_STATE")
         {
@@ -294,7 +282,7 @@ void loop()
             schMinute1 = getVariableFromMemory(83, 1).toInt();
             schAction1 = getVariableFromMemory(85, 1).toInt();
             schRepeat1 = getVariableFromMemory(88, 1).toInt();
-        } 
+        }
         else if (dataFingerPrint == "GET_DATA_ALARM1")
         {
             Serial.println(schHour1);
@@ -308,6 +296,15 @@ void loop()
             Serial.println(friday);
             Serial.println(saturday);
             Serial.println(sunday);
+        }
+        else if (dataFingerPrint == "SEND_EVENT")
+        {
+            String key[] = {"token", "state"};
+            String value[] = {TOKEN, "500"};
+            int sizeKey = sizeof(key) / sizeof(key[0]);
+            int sizeValue = sizeof(value) / sizeof(value[0]);
+
+            emitEvent(key, value, sizeKey, sizeValue, "DEVICE:testEvent");
         }
 
         /*uint64_t now = millis();
@@ -341,14 +338,21 @@ void loop()
 
     unsigned long currentMillis = millis();
 
-    //To make the first petition to the server in order to get the actual value of the relay
+    // To make the first petition to the server in order to get the actual value of the relay
     if (currentMillis - previousMillis > interval and firstPetition == true)
     {
         previousMillis = currentMillis;
         Serial.println("Primera Petición");
         // Serial.println(TOKEN);
-        getCurrentStateRelay(TOKEN);
-        RtcDateTime now = Rtc.GetDateTime();
+        //getCurrentStateRelay(TOKEN);
+
+        String key[] = {"token"};
+        String value[] = {TOKEN};
+        int sizeKey = sizeof(key) / sizeof(key[0]);
+        int sizeValue = sizeof(value) / sizeof(value[0]);
+        emitEvent(key, value, sizeKey, sizeValue, "DEVICE:getCurrentStateDRL1");
+
+            RtcDateTime now = Rtc.GetDateTime();
         String time = String(now.Day()) + "/" + String(now.Month()) + "/" + String(now.Year()) + "-" + String(now.Hour()) + ":" + String(now.Minute()) + ":" + String(now.Second());
         sendCurrentDate(TOKEN, time);
 
@@ -359,29 +363,26 @@ void loop()
     if (currentMillis - previousMillis > checkAlarminterval)
     {
         RtcDateTime now = Rtc.GetDateTime();
-        if(now.Hour() == schHour1 and now.Minute() == schMinute1)
+        if (now.Hour() == schHour1 and now.Minute() == schMinute1)
         {
             Serial.println("Se dispara alarma");
             Serial.println(now.Minute());
             changeStateRelay(String(schAction1));
         }
         previousMillis = currentMillis;
-        
-        
+
         // do something
     }
 
-    //Timer movement sensor
+    // Timer movement sensor
     if (currentMillis - previousMillis > checkSensorMovement)
     {
         int val = digitalRead(sensorMovement);
 
-        //Serial.println(val);
+        // Serial.println(val);
 
         previousMillis = currentMillis;
-        
+
         // do something
     }
-
-
 }
