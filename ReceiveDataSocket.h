@@ -49,6 +49,22 @@ void eventHadlerSocketIO(uint8_t *payload, size_t length)
         String value = dataResponseSocket["response"];
         changeStateRelay(value);
     }
+    else if (eventName == "DEVICE:resetWifiSetting")
+    {
+        String key[] = {"token"};
+        String value[] = {TOKEN};
+        int sizeKey = sizeof(key) / sizeof(key[0]);
+        int sizeValue = sizeof(value) / sizeof(value[0]);
+        emitEvent(key, value, sizeKey, sizeValue, "DEVICE:confirmResetWifiSetting");
+        reconfigWifiSettings();
+
+    }
+    else if(eventName == "DEVICE:changeStateSensorMovement")
+    {
+        String state = dataResponseSocket["state"];
+        stateSensorMovement = state == "1" ? true : false;
+        //stateSensorMovement ? false : true;
+    }
 }
 
 void responseServerSocket(uint8_t *payload, size_t length)

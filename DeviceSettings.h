@@ -2,6 +2,7 @@
 const int TOKEN_POSITION = 0;
 const int SERVER_POSITION = 31;
 const int PORT_POSITION = 61;
+unsigned long startTimeResetAllBtn = 0;
 
 WiFiManager wifiManager;
 // flag for saving data, for Wifi Manager
@@ -137,4 +138,22 @@ void reconfigWifiSettings()
         ESP.reset();
         delay(500);
     }
+}
+
+
+void resetAllSettings(int stateResetAllBtn)
+{
+    if (stateResetAllBtn == HIGH) {
+    // if the button is pressed
+    if (startTimeResetAllBtn == 0) {
+      // if this is the first time the button was pressed
+      startTimeResetAllBtn = millis(); // store the current time
+    } else if (millis() - startTimeResetAllBtn >= 8000) {
+      // if the button has been pressed for 5 seconds
+      Serial.println("Se procede a reiniciar");
+      startTimeResetAllBtn = 0;
+    }
+  }else{
+    startTimeResetAllBtn = 0;
+  } 
 }

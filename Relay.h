@@ -12,11 +12,14 @@ void changeStateRelay(String state)
     if (state == "1")
     {
         digitalWrite(RELAY, LOW);
+        IsRelayOn = true;
         emitEvent(key, value, sizeKey, sizeValue, "DEVICE:confirmChangeStateDRL1");
+
     }
     else if (state == "0")
     {
         digitalWrite(RELAY, HIGH);
+        IsRelayOn = false;
         emitEvent(key, value, sizeKey, sizeValue, "DEVICE:confirmChangeStateDRL1");
     }
 
