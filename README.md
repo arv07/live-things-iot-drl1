@@ -27,3 +27,7 @@ El acabado que se muestra es provisional y puede ser mejorado
 <img src="https://firebasestorage.googleapis.com/v0/b/landingarv.appspot.com/o/live-things-iot-img%2FDRL1.jpg?alt=media&token=64094581-dd15-407d-b99e-6c7bdde71da8" width="500"/>
 <img src="https://firebasestorage.googleapis.com/v0/b/landingarv.appspot.com/o/live-things-iot-img%2FDRL1-f2.jpg?alt=media&token=65907485-4f9e-42ef-bde0-1cf58bdf1687" width="500"/>
 </div>
+
+## Esquemático
+
+[DRL1 - EasyEda](https://oshwlab.com/andresarv/drl1_v1)
